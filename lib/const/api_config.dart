@@ -10,5 +10,5 @@ class ApiConfig {
   static const String fetchCouriers = 'delivery/couriers';
 
   // Google Places API Key - Replace with your actual API key
-  static const String googlePlacesApiKey = 'AIzaSyDTgt2XnPDLGyOj0Cu5HhmE0A9sO6WENOM';
+  static const String googlePlacesApiKey = '';
 }
