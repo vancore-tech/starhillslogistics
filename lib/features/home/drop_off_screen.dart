@@ -8,6 +8,7 @@ import 'package:starhills/model/courier_model.dart';
 import '../../const/const.dart';
 import '../../const/api_config.dart';
 import 'drop_off_controller.dart';
+import 'confirm_ride_screen.dart';
 
 class DropOffScreen extends StatelessWidget {
   const DropOffScreen({super.key, required this.selectedRider});
@@ -33,10 +34,10 @@ class DropOffScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // IconButton(
-                      //   icon: const Icon(Icons.arrow_back),
-                      //   onPressed: () => Get.back(),
-                      // ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Get.back(),
+                      ),
                       Text(
                         "Set Pickup & Drop-off",
                         style: TextStyle(
@@ -190,23 +191,69 @@ class DropOffScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     height: 50.h,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r),
+                    child: Obx(() {
+                      return ElevatedButton(
+                        onPressed: controller.isCreatingDelivery.value
+                            ? null
+                            : () async {
+                                if (controller.pickupLatLng.value == null ||
+                                    controller.dropoffLatLng.value == null) {
+                                  Get.snackbar(
+                                    'Missing Information',
+                                    'Please select both pickup and drop-off locations',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                  return;
+                                }
+
+                                // Create delivery
+                                bool success = await controller
+                                    .createDelivery();
+
+                                if (success) {
+                                  // Navigate to confirm screen
+                                  Get.to(
+                                    () => ConfirmRideScreen(
+                                      selectedRider: selectedRider,
+                                    ),
+                                  );
+                                } else {
+                                  Get.snackbar(
+                                    'Error',
+                                    'Failed to create delivery. Please try again.',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        "Proceed to Book Ride",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                        child: controller.isCreatingDelivery.value
+                            ? SizedBox(
+                                height: 20.h,
+                                width: 20.w,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "Continue",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      );
+                    }),
                   ),
                 ],
               ),

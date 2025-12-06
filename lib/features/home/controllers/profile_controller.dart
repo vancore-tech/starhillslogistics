@@ -21,21 +21,49 @@ class ProfileController extends GetxController {
   getUserProfile() async {
     isLoading.value = true;
     try {
+      final token = StorageHelper.getToken();
+      print('Fetching profile with token: $token');
+
       var response = await http.get(
         Uri.parse(ApiConfig.baseUrl + ApiConfig.profileMe),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${StorageHelper.getToken()}',
+          'Authorization': 'Bearer $token',
         },
       );
-      print(response.body);
-      print(StorageHelper.getToken());
+
+      print('Profile response status: ${response.statusCode}');
+      print('Profile response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        profile.value = UserModel.fromJson(jsonDecode(response.body)['data']);
+        final data = jsonDecode(response.body);
+        print('Parsed profile data: $data');
+
+        profile.value = UserModel.fromJson(data['data']);
+
+        // Save user data to storage for later use
+        if (profile.value.fullName != null) {
+          StorageHelper.box.write('userName', profile.value.fullName);
+        }
+        if (profile.value.email != null) {
+          StorageHelper.box.write('userEmail', profile.value.email);
+        }
+        if (profile.value.phone != null) {
+          StorageHelper.box.write('userPhone', profile.value.phone);
+        }
+
+        print('Profile loaded successfully: ${profile.value.fullName}');
       } else {
+        print('Failed to fetch profile: ${response.statusCode}');
         showSnackbar('Error', 'Failed to fetch profile', ContentType.failure);
       }
     } catch (e) {
+      print('Error fetching profile: $e');
+      showSnackbar(
+        'Error',
+        'An error occurred while fetching profile',
+        ContentType.failure,
+      );
     } finally {
       isLoading.value = false;
     }

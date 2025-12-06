@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:starhills/features/home/available_riders_screen.dart';
 import 'package:starhills/features/home/controllers/profile_controller.dart';
+import 'package:starhills/model/courier_model.dart';
 import 'home_screen.dart';
-
+import 'drop_off_screen.dart';
 import 'package:starhills/features/home/profile_screen.dart';
 
 class MainLayout extends StatefulWidget {
@@ -22,7 +22,9 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const AvailableRidersScreen(),
+    DropOffScreen(
+      selectedRider: CourierModel(),
+    ), // Pass empty model, will be selected later
     const Center(child: Text('Track Screen')), // Placeholder
     const ProfileScreen(),
   ];
