@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:starhills/features/home/controllers/profile_controller.dart';
+import 'package:starhills/features/auth/login_screen.dart';
+import 'package:starhills/utils/storage_helper.dart' as StorageHelper;
 import 'package:intl/intl.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -32,21 +34,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {},
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.black),
-            onPressed: () {},
-          ),
-          SizedBox(width: 10.w),
-        ],
+        leading: SizedBox(),
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+        //     onPressed: () {},
+        //   ),
+        //   IconButton(
+        //     icon: const Icon(Icons.settings_outlined, color: Colors.black),
+        //     onPressed: () {},
+        //   ),
+        //   SizedBox(width: 10.w),
+        // ],
       ),
       body: Obx(() {
         if (profileController.isLoading.value) {
@@ -69,12 +68,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Container(
                           width: 100.w,
                           height: 100.w,
-                          decoration: const BoxDecoration(
+                          decoration:  BoxDecoration(
                             shape: BoxShape.circle,
                             image: DecorationImage(
-                              image: NetworkImage(
-                                'https://i.pravatar.cc/300',
-                              ), // Placeholder
+                              image: NetworkImage( 
+                                'https://www.gravatar.com/avatar/placeholder'),
                               fit: BoxFit.cover,
                             ),
                             color: Colors.grey, // Fallback
@@ -158,6 +156,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               }),
 
+              SizedBox(height: 30.h),
+
+              // Logout Button
+              SizedBox(
+                width: double.infinity,
+                height: 50.h,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Logout'),
+                        content: const Text('Are you sure you want to logout?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // Clear all stored data
+                              StorageHelper.clearToken();
+                              StorageHelper.box.remove('userId');
+                              StorageHelper.box.remove('userName');
+                              StorageHelper.box.remove('userEmail');
+                              StorageHelper.box.remove('userPhone');
+                              StorageHelper.box.remove('currentDeliveryId');
+
+                              // Navigate to login and clear all previous routes
+                              Navigator.pop(context); // Close dialog
+                              Get.offAll(() => const LoginScreen());
+                            },
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.r),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.logout, color: Colors.white),
+                      SizedBox(width: 10.w),
+                      Text(
+                        'Logout',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               SizedBox(height: 30.h),
 
               // Saved Addresses

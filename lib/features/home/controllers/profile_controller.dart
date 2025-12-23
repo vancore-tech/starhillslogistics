@@ -39,7 +39,8 @@ class ProfileController extends GetxController {
         final data = jsonDecode(response.body);
         print('Parsed profile data: $data');
 
-        profile.value = UserModel.fromJson(data['data']);
+        // Use new user response structure
+        profile.value = UserModel.fromJson(data['user'] ?? data['data']);
 
         // Save user data to storage for later use
         if (profile.value.fullName != null) {

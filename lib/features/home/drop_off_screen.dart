@@ -9,6 +9,7 @@ import '../../const/const.dart';
 import '../../const/api_config.dart';
 import 'drop_off_controller.dart';
 import 'confirm_ride_screen.dart';
+import 'shipment_sender_receiver_screen.dart';
 
 class DropOffScreen extends StatelessWidget {
   const DropOffScreen({super.key, required this.selectedRider});
@@ -207,27 +208,13 @@ class DropOffScreen extends StatelessWidget {
                                   );
                                   return;
                                 }
-
-                                // Create delivery
-                                bool success = await controller
-                                    .createDelivery();
-
-                                if (success) {
-                                  // Navigate to confirm screen
-                                  Get.to(
-                                    () => ConfirmRideScreen(
-                                      selectedRider: selectedRider,
-                                    ),
-                                  );
-                                } else {
-                                  Get.snackbar(
-                                    'Error',
-                                    'Failed to create delivery. Please try again.',
-                                    backgroundColor: Colors.red,
-                                    colorText: Colors.white,
-                                    snackPosition: SnackPosition.BOTTOM,
-                                  );
-                                }
+                                // Pass sender and receiver address to next screen
+                                Get.to(
+                                  () => ShipmentSenderReceiverScreen(
+                                    senderAddress: controller.pickupController.text,
+                                    receiverAddress: controller.dropoffController.text,
+                                  ),
+                                );
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,

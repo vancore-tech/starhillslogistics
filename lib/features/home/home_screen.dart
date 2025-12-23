@@ -4,6 +4,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:starhills/features/auth/controllers/auth_controller.dart';
 import 'package:starhills/features/auth/login_screen.dart';
+import 'package:starhills/features/home/package_details_screen.dart';
+import 'package:starhills/features/home/controllers/shipment_statistics_controller.dart';
+import 'package:starhills/features/home/controllers/wallet_controller.dart';
 import 'available_riders_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -12,6 +15,8 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.put(AuthController());
+    final ShipmentStatisticsController statisticsController = Get.put(ShipmentStatisticsController());
+    final WalletController walletController = Get.put(WalletController());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light grey background
@@ -163,120 +168,364 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              // SizedBox(height: 30.h),
+              // Container(
+              //   padding: EdgeInsets.all(15.w),
+              //   decoration: BoxDecoration(
+              //     color: Colors.white,
+              //     borderRadius: BorderRadius.circular(15.r),
+              //     boxShadow: const [
+              //       BoxShadow(
+              //         color: Colors.black12,
+              //         blurRadius: 5,
+              //         offset: Offset(0, 2),
+              //       ),
+              //     ],
+              //   ),
+              //   child: Column(
+              //     children: [
+              //       // Active Delivery Section
+              //       Row(
+              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //         children: [
+              //           Text(
+              //             'Active Delivery',
+              //             style: TextStyle(
+              //               fontSize: 18.sp,
+              //               fontWeight: FontWeight.bold,
+              //               color: Colors.black,
+              //             ),
+              //           ),
+              //           GestureDetector(
+              //             onTap: () {
+              //               Navigator.push(
+              //                 context,
+              //                 MaterialPageRoute(
+              //                   builder: (context) =>
+              //                       const AvailableRidersScreen(),
+              //                 ),
+              //               );
+              //             },
+              //             child: Text(
+              //               'See All',
+              //               style: TextStyle(
+              //                 fontSize: 14.sp,
+              //                 color: const Color(0xFF3F4492),
+              //                 fontWeight: FontWeight.bold,
+              //                 decoration: TextDecoration.underline,
+              //               ),
+              //             ),
+              //           ),
+              //         ],
+              //       ),
+              //       SizedBox(height: 15.h),
+              //       Row(
+              //         children: [
+              //           Container(
+              //             width: 60.w,
+              //             height: 60.h,
+              //             decoration: BoxDecoration(
+              //               color: Colors.grey.shade100,
+              //               borderRadius: BorderRadius.circular(10.r),
+              //             ),
+              //             child: Center(
+              //               child: Icon(
+              //                 FontAwesomeIcons.box,
+              //                 color: const Color(0xFF3F4492),
+              //                 size: 30.sp,
+              //               ),
+              //             ),
+              //           ),
+              //           SizedBox(width: 15.w),
+              //           Expanded(
+              //             child: Column(
+              //               crossAxisAlignment: CrossAxisAlignment.start,
+              //               children: [
+              //                 Text(
+              //                   'Package #1234567889',
+              //                   style: TextStyle(
+              //                     fontSize: 16.sp,
+              //                     fontWeight: FontWeight.bold,
+              //                     color: Colors.black,
+              //                   ),
+              //                 ),
+              //                 SizedBox(height: 5.h),
+              //                 Text(
+              //                   'In Transit',
+              //                   style: TextStyle(
+              //                     fontSize: 14.sp,
+              //                     color: Colors.grey,
+              //                   ),
+              //                 ),
+              //               ],
+              //             ),
+              //           ),
+              //         ],
+              //       ),
+              //       SizedBox(height: 15.h),
+              //       // Progress Bar
+              //       ClipRRect(
+              //         borderRadius: BorderRadius.circular(5.r),
+              //         child: LinearProgressIndicator(
+              //           value: 0.7,
+              //           backgroundColor: const Color(0xFFE8EAF6),
+              //           valueColor: const AlwaysStoppedAnimation<Color>(
+              //             Color(0xFF3F4492),
+              //           ),
+              //           minHeight: 8.h,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
               SizedBox(height: 30.h),
+
+              // Shipment Statistics
+              Text(
+                'SHIPMENT STATISTICS',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Obx(() {
+                final stats = statisticsController.statistics.value;
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildStatCard(stats.total.toString(), 'Total', Colors.blue),
+                    _buildStatCard(stats.delivered.toString(), 'Delivered', Colors.green),
+                    _buildStatCard(stats.inTransit.toString(), 'Transit', Colors.orange),
+                    _buildStatCard(stats.cancelled.toString(), 'Cancelled', Colors.red),
+                  ],
+                );
+              }),
+              SizedBox(height: 30.h),
+
+              // Wallet Balance
+              Obx(() {
+                final balance = walletController.balance.value;
+                final currency = walletController.currency.value;
+                return Container(
+                  padding: EdgeInsets.all(20.r),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3F4492),
+                    borderRadius: BorderRadius.circular(15.r),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'WALLET BALANCE',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                          SizedBox(height: 5.h),
+                          Text(
+                            '${currency == 'NGN' ? '₦' : ''}${balance.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF3F4492),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                        ),
+                        child: const Text('+ Add Funds'),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              SizedBox(height: 30.h),
+
+              // Recent Shipments
+              Text(
+                'RECENT SHIPMENTS',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 10.h),
               Container(
-                padding: EdgeInsets.all(15.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15.r),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 5,
-                      offset: Offset(0, 2),
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    // Active Delivery Section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Active Delivery',
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const AvailableRidersScreen(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'See All',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: const Color(0xFF3F4492),
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 15.h),
-                    Row(
-                      children: [
-                        Container(
-                          width: 60.w,
-                          height: 60.h,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              FontAwesomeIcons.box,
-                              color: const Color(0xFF3F4492),
-                              size: 30.sp,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 15.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Package #1234567889',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              Text(
-                                'In Transit',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 15.h),
-                    // Progress Bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(5.r),
-                      child: LinearProgressIndicator(
-                        value: 0.7,
-                        backgroundColor: const Color(0xFFE8EAF6),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF3F4492),
-                        ),
-                        minHeight: 8.h,
-                      ),
-                    ),
+                    _buildShipmentRow('SB123456', 'Lagos', 'Abuja', 'In Transit', Colors.orange),
+                    const Divider(height: 1),
+                    _buildShipmentRow('SB123455', 'Kano', 'Lagos', 'Delivered', Colors.green),
+                    const Divider(height: 1),
+                    _buildShipmentRow('SB123454', 'Lagos', 'PH', 'Picked Up', Colors.blue),
                   ],
                 ),
+              ),
+              SizedBox(height: 30.h),
+
+              // Actions
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.to(() => const PackageDetailsScreen());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3F4492),
+                        padding: EdgeInsets.symmetric(vertical: 15.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Create Shipment',
+                        style: TextStyle(fontSize: 16.sp, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 15.w),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 15.h),
+                        side: const BorderSide(color: Color(0xFF3F4492)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                      child: Text(
+                        'View All Shipments',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: const Color(0xFF3F4492),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 30.h),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String count, String label, Color color) {
+    return Container(
+      width: 80.w,
+      padding: EdgeInsets.symmetric(vertical: 15.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            count,
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 5.h),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShipmentRow(String id, String from, String to, String status, Color statusColor) {
+    return Padding(
+      padding: EdgeInsets.all(15.r),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  id,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                  ),
+                ),
+                SizedBox(height: 5.h),
+                Row(
+                  children: [
+                    Text(from, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 5.w),
+                      child: Icon(Icons.arrow_forward, size: 12.sp, color: Colors.grey),
+                    ),
+                    Text(to, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Icon(Icons.chevron_right, color: Colors.grey[400]),
+        ],
       ),
     );
   }

@@ -6,7 +6,7 @@ class ApiConfig {
   static const String register = 'auth/register';
   static const String verifyOtp = 'auth/verify-otp';
   static const String resendOtp = 'auth/resend-otp';
-  static const String profileMe = 'user/me';
+  static const String profileMe = 'users/me';
   static const String fetchCouriers = 'delivery/couriers';
   static const String fetchCategories = 'delivery/categories';
   static const String createDelivery = 'delivery/deliveries';
