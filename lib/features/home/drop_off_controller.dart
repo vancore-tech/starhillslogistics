@@ -8,6 +8,10 @@ import 'package:starhills/model/category_model.dart';
 import 'package:starhills/utils/storage_helper.dart' as StorageHelper;
 
 class DropOffController extends GetxController {
+  // Pickup address details
+  String? pickupCity;
+  String? pickupState;
+  String? pickupCountry;
   final TextEditingController pickupController = TextEditingController();
   final TextEditingController dropoffController = TextEditingController();
 
@@ -17,6 +21,10 @@ class DropOffController extends GetxController {
   // Location coordinates
   Rx<LatLng?> pickupLatLng = Rx<LatLng?>(null);
   Rx<LatLng?> dropoffLatLng = Rx<LatLng?>(null);
+
+  // Address codes from validation
+  RxInt pickupAddressCode = 0.obs;
+  RxInt dropoffAddressCode = 0.obs;
 
   // Map controller
   GoogleMapController? mapController;
@@ -64,6 +72,11 @@ class DropOffController extends GetxController {
       pickupLatLng.value = LatLng(lat, lng);
       _updateMarkersAndPolylines();
       _animateToShowBothMarkers();
+      // TODO: Extract city, state, country from Google Places API result if available
+      // For now, set as empty or placeholder
+      pickupCity = '';
+      pickupState = '';
+      pickupCountry = '';
     }
   }
 
@@ -208,6 +221,57 @@ class DropOffController extends GetxController {
 
   void selectCategory(int categoryId) {
     selectedCategoryId.value = categoryId;
+  }
+
+  /// Validates an address using the API
+  /// Returns the address code if successful, null otherwise
+  Future<int?> validateAddress(String address) async {
+    try {
+      final token = StorageHelper.getToken();
+      final userName = StorageHelper.box.read('userName') ?? '';
+      final userEmail = StorageHelper.box.read('userEmail') ?? '';
+      final userPhone = StorageHelper.box.read('userPhone') ?? '';
+
+      final requestBody = {
+        "name": userName,
+        "email": userEmail,
+        "phone": userPhone,
+        "address": address,
+      };
+
+      debugPrint('Validating address: $address');
+      debugPrint('Request body: ${jsonEncode(requestBody)}');
+
+      var response = await http.post(
+        Uri.parse(ApiConfig.baseUrl + ApiConfig.validateAddress),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      debugPrint('Validate address response status: ${response.statusCode}');
+      debugPrint('Validate address response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        if (data['success'] == true &&
+            data['result'] != null &&
+            data['result']['data'] != null &&
+            data['result']['data']['data'] != null) {
+          final addressCode = data['result']['data']['data']['address_code'];
+          debugPrint('Address validated successfully! Code: $addressCode');
+          return addressCode as int?;
+        }
+      }
+
+      debugPrint('Address validation failed');
+      return null;
+    } catch (e) {
+      debugPrint('Error validating address: $e');
+      return null;
+    }
   }
 
   Future<bool> createDelivery() async {

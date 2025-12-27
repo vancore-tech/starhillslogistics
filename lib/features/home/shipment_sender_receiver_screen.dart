@@ -11,10 +11,14 @@ import 'package:starhills/utils/storage_helper.dart' as StorageHelper;
 class ShipmentSenderReceiverScreen extends StatefulWidget {
   final String senderAddress;
   final String receiverAddress;
+  final int senderAddressCode;
+  final int receiverAddressCode;
   const ShipmentSenderReceiverScreen({
     super.key,
     required this.senderAddress,
     required this.receiverAddress,
+    required this.senderAddressCode,
+    required this.receiverAddressCode,
   });
 
   @override
@@ -186,15 +190,11 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
                         print(categories);
                         print('DEBUG: Dimensions passed to next screen:');
                         print(dimensions);
-                        // You need to get the actual codes from your address selection logic
-                        // For now, use placeholder values or fetch from your address models
-                        final senderAddressCode = 445104399; // TODO: Replace with actual sender address code
-                        final receiverAddressCode = 938461645; // TODO: Replace with actual receiver address code
                         Get.to(() => ShipmentPackageDetailsScreen(
                               categories: List<Map<String, dynamic>>.from(categories),
                               dimensions: List<Map<String, dynamic>>.from(dimensions),
-                              senderAddressCode: senderAddressCode,
-                              receiverAddressCode: receiverAddressCode,
+                              senderAddressCode: widget.senderAddressCode,
+                              receiverAddressCode: widget.receiverAddressCode,
                             ));
                       }
                     },

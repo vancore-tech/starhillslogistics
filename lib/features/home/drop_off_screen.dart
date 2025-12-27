@@ -33,18 +33,16 @@ class DropOffScreen extends StatelessWidget {
                 children: [
                   // Header
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Get.back(),
-                      ),
-                      Text(
-                        "Set Pickup & Drop-off",
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                      Center(
+                        child: Text(
+                          "Set Pickup & Drop-off",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                       const Icon(Icons.help_outline),
@@ -208,11 +206,114 @@ class DropOffScreen extends StatelessWidget {
                                   );
                                   return;
                                 }
-                                // Pass sender and receiver address to next screen
+
+                                // Show validation progress dialog
+                                Get.dialog(
+                                  WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: Dialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          15.r,
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(20.w),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            CircularProgressIndicator(
+                                              color: primaryColor,
+                                            ),
+                                            SizedBox(height: 20.h),
+                                            Text(
+                                              'Validating Addresses...',
+                                              style: TextStyle(
+                                                fontSize: 16.sp,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            SizedBox(height: 10.h),
+                                            Text(
+                                              'Please wait while we validate your pickup and drop-off locations',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  barrierDismissible: false,
+                                );
+
+                                // Validate pickup address
+                                final pickupCode = await controller
+                                    .validateAddress(
+                                      controller.pickupController.text,
+                                    );
+
+                                if (pickupCode == null) {
+                                  Get.back(); // Close dialog
+                                  Get.snackbar(
+                                    'Validation Failed',
+                                    'Failed to validate pickup address. Please try again.',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                  return;
+                                }
+
+                                // Validate dropoff address
+                                final dropoffCode = await controller
+                                    .validateAddress(
+                                      controller.dropoffController.text,
+                                    );
+
+                                Get.back(); // Close dialog
+
+                                if (dropoffCode == null) {
+                                  Get.snackbar(
+                                    'Validation Failed',
+                                    'Failed to validate drop-off address. Please try again.',
+                                    backgroundColor: Colors.red,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                  return;
+                                }
+
+                                // Store address codes
+                                controller.pickupAddressCode.value = pickupCode;
+                                controller.dropoffAddressCode.value =
+                                    dropoffCode;
+
+                                debugPrint(
+                                  '[DropOffScreen] Pickup Address: ${controller.pickupController.text}',
+                                );
+                                debugPrint(
+                                  '[DropOffScreen] Pickup Code: $pickupCode',
+                                );
+                                debugPrint(
+                                  '[DropOffScreen] Drop-off Address: ${controller.dropoffController.text}',
+                                );
+                                debugPrint(
+                                  '[DropOffScreen] Drop-off Code: $dropoffCode',
+                                );
+
+                                // Navigate to next screen with validated address codes
                                 Get.to(
                                   () => ShipmentSenderReceiverScreen(
-                                    senderAddress: controller.pickupController.text,
-                                    receiverAddress: controller.dropoffController.text,
+                                    senderAddress:
+                                        controller.pickupController.text,
+                                    receiverAddress:
+                                        controller.dropoffController.text,
+                                    senderAddressCode: pickupCode,
+                                    receiverAddressCode: dropoffCode,
                                   ),
                                 );
                               },

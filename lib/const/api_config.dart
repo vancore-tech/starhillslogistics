@@ -11,7 +11,8 @@ class ApiConfig {
   static const String fetchCategories = 'delivery/categories';
   static const String createDelivery = 'delivery/deliveries';
   static const String createRate = 'delivery/deliveries/rates';
-  
+  static const String validateAddress = 'addresses/validate';
+
   // Returns the full URL for creating a shipment
   static String createShipment(String deliveryId) =>
       '${baseUrl}delivery/deliveries/$deliveryId/shipments';
