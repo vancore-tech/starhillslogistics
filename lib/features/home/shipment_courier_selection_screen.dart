@@ -5,9 +5,14 @@ import 'shipment_controller.dart';
 
 class ShipmentCourierSelectionScreen extends StatefulWidget {
   final Map<String, dynamic> rateRequestBody;
+  final String? insuranceCode;
+  final bool skipFetchRates;
+
   const ShipmentCourierSelectionScreen({
     super.key,
     required this.rateRequestBody,
+    this.insuranceCode,
+    this.skipFetchRates = false,
   });
 
   @override
@@ -25,7 +30,10 @@ class _ShipmentCourierSelectionScreenState
     super.initState();
     debugPrint('[ShipmentCourierSelectionScreen] rateRequestBody:');
     debugPrint(widget.rateRequestBody.toString());
-    controller.fetchRates(widget.rateRequestBody);
+
+    if (!widget.skipFetchRates) {
+      controller.fetchRates(widget.rateRequestBody);
+    }
   }
 
   @override
@@ -178,6 +186,14 @@ class _ShipmentCourierSelectionScreenState
                                     courier['courier_id'];
                                 requestBody['service_code'] =
                                     courier['service_code'];
+                                requestBody['amount'] = courier['total'];
+
+                                // Add insurance code if available
+                                if (widget.insuranceCode != null) {
+                                  requestBody['insurance_code'] =
+                                      widget.insuranceCode;
+                                }
+
                                 final success = await controller.createShipment(
                                   requestBody,
                                 );

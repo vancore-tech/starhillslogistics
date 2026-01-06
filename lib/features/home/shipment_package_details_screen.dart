@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'shipment_courier_selection_screen.dart';
+import 'package:starhills/features/home/shipment_insurance_selection_screen.dart';
 import 'dart:convert';
 import 'shipment_controller.dart';
 
@@ -10,12 +10,27 @@ class ShipmentPackageDetailsScreen extends StatefulWidget {
   final List<Map<String, dynamic>> dimensions;
   final int senderAddressCode;
   final int receiverAddressCode;
+  final String receiverName;
+  final String receiverPhone;
+  final String receiverEmail;
+  final String receiverAddress;
+  final String receiverCity;
+  final String receiverState;
+  final String receiverCountry;
+
   const ShipmentPackageDetailsScreen({
     super.key,
     required this.categories,
     required this.dimensions,
     required this.senderAddressCode,
     required this.receiverAddressCode,
+    required this.receiverName,
+    required this.receiverPhone,
+    required this.receiverEmail,
+    required this.receiverAddress,
+    required this.receiverCity,
+    required this.receiverState,
+    required this.receiverCountry,
   });
 
   @override
@@ -39,13 +54,6 @@ class _ShipmentPackageDetailsScreenState
   final TextEditingController itemQtyController = TextEditingController();
   final TextEditingController itemPriceController = TextEditingController();
 
-  // COD & Insurance
-  bool enableCOD = false;
-  final TextEditingController codAmountController = TextEditingController();
-  bool enableInsurance = false;
-  final TextEditingController insuranceValueController =
-      TextEditingController();
-
   // Dimension details
   final TextEditingController heightController = TextEditingController();
   final TextEditingController widthController = TextEditingController();
@@ -58,8 +66,7 @@ class _ShipmentPackageDetailsScreenState
     itemNameController.dispose();
     itemQtyController.dispose();
     itemPriceController.dispose();
-    codAmountController.dispose();
-    insuranceValueController.dispose();
+
     heightController.dispose();
     widthController.dispose();
     lengthController.dispose();
@@ -486,139 +493,7 @@ class _ShipmentPackageDetailsScreenState
                   ),
                 ),
               ),
-              SizedBox(height: 22.h),
-              // COD
-              Card(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                elevation: 1,
-                margin: EdgeInsets.zero,
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.attach_money,
-                            color: Colors.purple,
-                            size: 20.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Cash on Delivery',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15.sp,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 12.h),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: enableCOD,
-                            onChanged: (val) =>
-                                setState(() => enableCOD = val ?? false),
-                          ),
-                          Text('Enable COD', style: TextStyle(fontSize: 13.sp)),
-                          SizedBox(width: 12.w),
-                          if (enableCOD)
-                            Expanded(
-                              child: TextFormField(
-                                controller: codAmountController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  labelText: 'Amount',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12.w,
-                                    vertical: 12.h,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 22.h),
-              // Insurance
-              Card(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                elevation: 1,
-                margin: EdgeInsets.zero,
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.verified_user,
-                            color: Colors.blueGrey,
-                            size: 20.sp,
-                          ),
-                          SizedBox(width: 8.w),
-                          Text(
-                            'Insurance',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15.sp,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 12.h),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: enableInsurance,
-                            onChanged: (val) =>
-                                setState(() => enableInsurance = val ?? false),
-                          ),
-                          Text(
-                            'Add Insurance',
-                            style: TextStyle(fontSize: 13.sp),
-                          ),
-                          SizedBox(width: 12.w),
-                          if (enableInsurance)
-                            Expanded(
-                              child: TextFormField(
-                                controller: insuranceValueController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  labelText: 'Value',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12.w,
-                                    vertical: 12.h,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+
               SizedBox(height: 30.h),
               // Button row (fix overflow)
               Row(
@@ -666,7 +541,8 @@ class _ShipmentPackageDetailsScreenState
                                   'pickup_date': DateTime.now()
                                       .toIso8601String()
                                       .split('T')[0],
-                                  'category_id': selectedCategoryId,
+                                  'category_id':
+                                      selectedCategoryId, // Now sending category name
                                   'service_type':
                                       'pickup', // TODO: Replace with actual service type if needed
                                   'delivery_instructions': descriptionController
@@ -728,6 +604,14 @@ class _ShipmentPackageDetailsScreenState
                                         int.tryParse(heightController.text) ??
                                         selectedDim['height'],
                                   },
+                                  // Receiver details for shipment creation
+                                  'receiver_name': widget.receiverName,
+                                  'receiver_phone': widget.receiverPhone,
+                                  'receiver_email': widget.receiverEmail,
+                                  'receiver_address': widget.receiverAddress,
+                                  'receiver_city': widget.receiverCity,
+                                  'receiver_state': widget.receiverState,
+                                  'receiver_country': widget.receiverCountry,
                                 };
                                 // Call fetchRates in the controller
                                 debugPrint(
@@ -755,7 +639,7 @@ class _ShipmentPackageDetailsScreenState
                                 // Only navigate if couriers are found
                                 if (shipmentController.couriers.isNotEmpty) {
                                   Get.to(
-                                    () => ShipmentCourierSelectionScreen(
+                                    () => ShipmentInsuranceSelectionScreen(
                                       rateRequestBody: rateRequestBody,
                                     ),
                                   );
@@ -790,7 +674,7 @@ class _ShipmentPackageDetailsScreenState
                               ),
                             )
                           : Text(
-                              'Next: Choose Courier →',
+                              'Next: Select Insurance →',
                               style: TextStyle(
                                 fontSize: 15.sp,
                                 color: Colors.white,

@@ -22,10 +22,12 @@ class ShipmentSenderReceiverScreen extends StatefulWidget {
   });
 
   @override
-  State<ShipmentSenderReceiverScreen> createState() => _ShipmentSenderReceiverScreenState();
+  State<ShipmentSenderReceiverScreen> createState() =>
+      _ShipmentSenderReceiverScreenState();
 }
 
-class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScreen> {
+class _ShipmentSenderReceiverScreenState
+    extends State<ShipmentSenderReceiverScreen> {
   final _formKey = GlobalKey<FormState>();
   final ProfileController profileController = Get.find<ProfileController>();
 
@@ -33,15 +35,26 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
   final TextEditingController receiverNameController = TextEditingController();
   final TextEditingController receiverPhoneController = TextEditingController();
   final TextEditingController receiverEmailController = TextEditingController();
-  final TextEditingController receiverAddressController = TextEditingController();
+  final TextEditingController receiverAddressController =
+      TextEditingController();
   final TextEditingController receiverCityController = TextEditingController();
   final TextEditingController receiverStateController = TextEditingController();
-  final TextEditingController receiverCountryController = TextEditingController(text: 'Nigeria');
+  final TextEditingController receiverCountryController = TextEditingController(
+    text: 'Nigeria',
+  );
 
   @override
   void initState() {
     super.initState();
     receiverAddressController.text = widget.receiverAddress;
+
+    // Auto-populate receiver city, state, country from address
+    receiverCityController.text =
+        _extractCityFromAddress(widget.receiverAddress) ?? '';
+    receiverStateController.text =
+        _extractStateFromAddress(widget.receiverAddress) ?? '';
+    receiverCountryController.text =
+        'Nigeria'; // Already set in controller initialization
   }
 
   @override
@@ -62,7 +75,10 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text('Create New Shipment', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Create New Shipment',
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -75,12 +91,21 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Step 1 of 3', style: TextStyle(fontSize: 13.sp, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+              Text(
+                'Step 1 of 3',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               SizedBox(height: 18.h),
               // SENDER INFO
               Card(
                 color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
                 elevation: 1,
                 margin: EdgeInsets.zero,
                 child: Padding(
@@ -92,22 +117,68 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
                         children: [
                           Icon(Icons.send, color: Colors.blue, size: 20.sp),
                           SizedBox(width: 8.w),
-                          Text('Sender Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp)),
+                          Text(
+                            'Sender Information',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.sp,
+                            ),
+                          ),
                         ],
                       ),
                       SizedBox(height: 12.h),
-                      _buildTextField('Name', initialValue: user.fullName ?? '', enabled: false),
-                      _buildTextField('Phone', initialValue: user.phone ?? '', enabled: false),
-                      _buildTextField('Email', initialValue: user.email ?? '', enabled: false),
-                      _buildTextField('Address', initialValue: widget.senderAddress, enabled: false),
+                      _buildTextField(
+                        'Name',
+                        initialValue: user.fullName ?? '',
+                        enabled: false,
+                      ),
+                      _buildTextField(
+                        'Phone',
+                        initialValue: user.phone ?? '',
+                        enabled: false,
+                      ),
+                      _buildTextField(
+                        'Email',
+                        initialValue: user.email ?? '',
+                        enabled: false,
+                      ),
+                      _buildTextField(
+                        'Address',
+                        initialValue: widget.senderAddress,
+                        enabled: false,
+                      ),
                       Row(
                         children: [
-                          Expanded(child: _buildTextField('City', initialValue: '', enabled: false)),
+                          Expanded(
+                            child: _buildTextField(
+                              'City',
+                              initialValue:
+                                  _extractCityFromAddress(
+                                    widget.senderAddress,
+                                  ) ??
+                                  '',
+                              enabled: false,
+                            ),
+                          ),
                           SizedBox(width: 10.w),
-                          Expanded(child: _buildTextField('State', initialValue: '', enabled: false)),
+                          Expanded(
+                            child: _buildTextField(
+                              'State',
+                              initialValue:
+                                  _extractStateFromAddress(
+                                    widget.senderAddress,
+                                  ) ??
+                                  '',
+                              enabled: false,
+                            ),
+                          ),
                         ],
                       ),
-                      _buildTextField('Country', initialValue: 'Nigeria', enabled: false),
+                      _buildTextField(
+                        'Country',
+                        initialValue: 'Nigeria',
+                        enabled: false,
+                      ),
                     ],
                   ),
                 ),
@@ -116,7 +187,9 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
               // RECEIVER INFO
               Card(
                 color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
                 elevation: 1,
                 margin: EdgeInsets.zero,
                 child: Padding(
@@ -128,22 +201,63 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
                         children: [
                           Icon(Icons.inbox, color: Colors.green, size: 20.sp),
                           SizedBox(width: 8.w),
-                          Text('Receiver Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp)),
+                          Text(
+                            'Receiver Information',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.sp,
+                            ),
+                          ),
                         ],
                       ),
                       SizedBox(height: 12.h),
-                      _buildTextField('Name', controller: receiverNameController, validator: _requiredValidator),
-                      _buildTextField('Phone', controller: receiverPhoneController, validator: _requiredValidator),
-                      _buildTextField('Email', controller: receiverEmailController),
-                      _buildTextField('Address', controller: receiverAddressController, validator: _requiredValidator),
+                      _buildTextField(
+                        'Name',
+                        controller: receiverNameController,
+                        validator: _requiredValidator,
+                      ),
+                      _buildTextField(
+                        'Phone',
+                        controller: receiverPhoneController,
+                        validator: _requiredValidator,
+                      ),
+                      _buildTextField(
+                        'Email',
+                        controller: receiverEmailController,
+                      ),
+                      _buildTextField(
+                        'Address',
+                        controller: receiverAddressController,
+                        validator: _requiredValidator,
+                        enabled: false,
+                      ),
                       Row(
                         children: [
-                          Expanded(child: _buildTextField('City', controller: receiverCityController, validator: _requiredValidator)),
+                          Expanded(
+                            child: _buildTextField(
+                              'City',
+                              controller: receiverCityController,
+                              validator: _requiredValidator,
+                              enabled: false,
+                            ),
+                          ),
                           SizedBox(width: 10.w),
-                          Expanded(child: _buildTextField('State', controller: receiverStateController, validator: _requiredValidator)),
+                          Expanded(
+                            child: _buildTextField(
+                              'State',
+                              controller: receiverStateController,
+                              validator: _requiredValidator,
+                              enabled: false,
+                            ),
+                          ),
                         ],
                       ),
-                      _buildTextField('Country', controller: receiverCountryController, validator: _requiredValidator),
+                      _buildTextField(
+                        'Country',
+                        controller: receiverCountryController,
+                        validator: _requiredValidator,
+                        enabled: false,
+                      ),
                     ],
                   ),
                 ),
@@ -155,11 +269,22 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
                   OutlinedButton(
                     onPressed: () => Get.back(),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32.w,
+                        vertical: 14.h,
+                      ),
                       side: const BorderSide(color: Color(0xFF3F4492)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
                     ),
-                    child: Text('Back', style: TextStyle(fontSize: 15.sp, color: const Color(0xFF3F4492))),
+                    child: Text(
+                      'Back',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        color: const Color(0xFF3F4492),
+                      ),
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () async {
@@ -168,14 +293,18 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
                         // Fetch categories and dimensions in parallel with Bearer token
                         final responses = await Future.wait([
                           http.get(
-                            Uri.parse('https://starhills-logistcis-be-avbmfugsewgbcvg7.canadacentral-01.azurewebsites.net/api/v1/packages/categories'),
+                            Uri.parse(
+                              'https://starhills-logistcis-be-avbmfugsewgbcvg7.canadacentral-01.azurewebsites.net/api/v1/packages/categories',
+                            ),
                             headers: {
                               'Content-Type': 'application/json',
                               'Authorization': 'Bearer $token',
                             },
                           ),
                           http.get(
-                            Uri.parse('https://starhills-logistcis-be-avbmfugsewgbcvg7.canadacentral-01.azurewebsites.net/api/v1/packages/dimensions'),
+                            Uri.parse(
+                              'https://starhills-logistcis-be-avbmfugsewgbcvg7.canadacentral-01.azurewebsites.net/api/v1/packages/dimensions',
+                            ),
                             headers: {
                               'Content-Type': 'application/json',
                               'Authorization': 'Bearer $token',
@@ -184,26 +313,49 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
                         ]);
                         final categoriesJson = jsonDecode(responses[0].body);
                         final dimensionsJson = jsonDecode(responses[1].body);
-                        final categories = (categoriesJson['categories'] ?? []) as List;
-                        final dimensions = (dimensionsJson['dimensions'] ?? []) as List;
+                        final categories =
+                            (categoriesJson['categories'] ?? []) as List;
+                        final dimensions =
+                            (dimensionsJson['dimensions'] ?? []) as List;
                         print('DEBUG: Categories passed to next screen:');
                         print(categories);
                         print('DEBUG: Dimensions passed to next screen:');
                         print(dimensions);
-                        Get.to(() => ShipmentPackageDetailsScreen(
-                              categories: List<Map<String, dynamic>>.from(categories),
-                              dimensions: List<Map<String, dynamic>>.from(dimensions),
-                              senderAddressCode: widget.senderAddressCode,
-                              receiverAddressCode: widget.receiverAddressCode,
-                            ));
+                        Get.to(
+                          () => ShipmentPackageDetailsScreen(
+                            categories: List<Map<String, dynamic>>.from(
+                              categories,
+                            ),
+                            dimensions: List<Map<String, dynamic>>.from(
+                              dimensions,
+                            ),
+                            senderAddressCode: widget.senderAddressCode,
+                            receiverAddressCode: widget.receiverAddressCode,
+                            receiverName: receiverNameController.text,
+                            receiverPhone: receiverPhoneController.text,
+                            receiverEmail: receiverEmailController.text,
+                            receiverAddress: receiverAddressController.text,
+                            receiverCity: receiverCityController.text,
+                            receiverState: receiverStateController.text,
+                            receiverCountry: receiverCountryController.text,
+                          ),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3F4492),
-                      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 14.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32.w,
+                        vertical: 14.h,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
                     ),
-                    child: Text('Next: Package →', style: TextStyle(fontSize: 15.sp, color: Colors.white)),
+                    child: Text(
+                      'Next: Package →',
+                      style: TextStyle(fontSize: 15.sp, color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -214,7 +366,13 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
     );
   }
 
-  Widget _buildTextField(String label, {String? initialValue, TextEditingController? controller, bool enabled = true, String? Function(String?)? validator}) {
+  Widget _buildTextField(
+    String label, {
+    String? initialValue,
+    TextEditingController? controller,
+    bool enabled = true,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: TextFormField(
@@ -227,7 +385,10 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 12.w,
+            vertical: 12.h,
+          ),
         ),
       ),
     );
@@ -236,6 +397,71 @@ class _ShipmentSenderReceiverScreenState extends State<ShipmentSenderReceiverScr
   String? _requiredValidator(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Required';
+    }
+    return null;
+  }
+
+  /// Helper method to extract city from address string
+  String? _extractCityFromAddress(String address) {
+    // Common Nigerian cities
+    final cities = [
+      'Lagos',
+      'Abuja',
+      'Ikeja',
+      'Victoria Island',
+      'Lekki',
+      'Ikoyi',
+      'Surulere',
+      'Yaba',
+      'Ajah',
+      'Festac',
+      'Kano',
+      'Ibadan',
+      'Port Harcourt',
+      'Benin',
+      'Kaduna',
+      'Iwo',
+      'Ojodu',
+    ];
+
+    final lowerAddress = address.toLowerCase();
+    for (final city in cities) {
+      if (lowerAddress.contains(city.toLowerCase())) {
+        return city;
+      }
+    }
+    return null;
+  }
+
+  /// Helper method to extract state from address string
+  String? _extractStateFromAddress(String address) {
+    // Map of common patterns to states
+    final statePatterns = {
+      'lagos': 'Lagos',
+      'abuja': 'FCT',
+      'fct': 'FCT',
+      'ikeja': 'Lagos',
+      'victoria island': 'Lagos',
+      'lekki': 'Lagos',
+      'ikoyi': 'Lagos',
+      'surulere': 'Lagos',
+      'yaba': 'Lagos',
+      'ajah': 'Lagos',
+      'festac': 'Lagos',
+      'ojodu': 'Lagos',
+      'kano': 'Kano',
+      'ibadan': 'Oyo',
+      'iwo': 'Oyo',
+      'port harcourt': 'Rivers',
+      'benin': 'Edo',
+      'kaduna': 'Kaduna',
+    };
+
+    final lowerAddress = address.toLowerCase();
+    for (final pattern in statePatterns.entries) {
+      if (lowerAddress.contains(pattern.key)) {
+        return pattern.value;
+      }
     }
     return null;
   }
