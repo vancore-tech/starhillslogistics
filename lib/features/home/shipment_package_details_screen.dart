@@ -162,7 +162,7 @@ class _ShipmentPackageDetailsScreenState
                             .toList(),
                         onChanged: (val) =>
                             setState(() => selectedCategoryId = val),
-                        validator: (val) => val == null ? 'Required' : null,
+                        // validator: (val) => val == null ? 'Required' : null,
                       ),
                       SizedBox(height: 12.h),
                       // Dimension Selector
@@ -526,13 +526,15 @@ class _ShipmentPackageDetailsScreenState
                       onPressed: isLoadingNext
                           ? null
                           : () async {
-                              if (_formKey.currentState!.validate() &&
-                                  selectedCategoryId != null &&
-                                  selectedDimensionIndex != null) {
+                              if (_formKey.currentState!.validate()) {
+                                // && selectedCategoryId != null && selectedDimensionIndex != null
                                 setState(() => isLoadingNext = true);
                                 // Build rateRequestBody from form fields
-                                final selectedDim =
-                                    widget.dimensions[selectedDimensionIndex!];
+                                Map<String, dynamic>? selectedDim;
+                                if (selectedDimensionIndex != null) {
+                                  selectedDim = widget
+                                      .dimensions[selectedDimensionIndex!];
+                                }
                                 final rateRequestBody = {
                                   'sender_address_code':
                                       widget.senderAddressCode,
@@ -593,17 +595,25 @@ class _ShipmentPackageDetailsScreenState
                                                 : '2',
                                           },
                                         ],
-                                  'package_dimension': {
-                                    'length':
-                                        int.tryParse(lengthController.text) ??
-                                        selectedDim['length'],
-                                    'width':
-                                        int.tryParse(widthController.text) ??
-                                        selectedDim['width'],
-                                    'height':
-                                        int.tryParse(heightController.text) ??
-                                        selectedDim['height'],
-                                  },
+                                  'package_dimension': selectedDim != null
+                                      ? {
+                                          'length':
+                                              int.tryParse(
+                                                lengthController.text,
+                                              ) ??
+                                              selectedDim['length'],
+                                          'width':
+                                              int.tryParse(
+                                                widthController.text,
+                                              ) ??
+                                              selectedDim['width'],
+                                          'height':
+                                              int.tryParse(
+                                                heightController.text,
+                                              ) ??
+                                              selectedDim['height'],
+                                        }
+                                      : null,
                                   // Receiver details for shipment creation
                                   'receiver_name': widget.receiverName,
                                   'receiver_phone': widget.receiverPhone,

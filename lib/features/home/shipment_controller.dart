@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:starhills/const/api_config.dart';
+import 'package:starhills/models/user_shipment.dart';
 import 'package:starhills/utils/storage_helper.dart' as StorageHelper;
 
 class ShipmentController extends GetxController {
@@ -134,7 +135,9 @@ class ShipmentController extends GetxController {
     }
   }
 
-  Future<bool> createShipment(Map<String, dynamic> shipmentData) async {
+  Future<Map<String, dynamic>?> createShipment(
+    Map<String, dynamic> shipmentData,
+  ) async {
     isCreatingShipment.value = true;
     try {
       final token = await StorageHelper.getToken();
@@ -148,7 +151,7 @@ class ShipmentController extends GetxController {
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
         );
-        return false;
+        return null;
       }
 
       // Get checkout data for sender info
@@ -177,22 +180,78 @@ class ShipmentController extends GetxController {
         'amount': shipmentData['amount'],
       };
 
-      // Add sender/receiver details if they need to be passed explicitly
-      // However, usually 'request_token' + 'service_code' might be enough if the backend cached the data.
-      // But looking at previous code, we were adding sender/receiver details.
-      // Let's keep adding them to be safe, filtering from shipmentData/checkoutData.
+      // Helper to safely parse double
+      double parseDouble(dynamic value) {
+        if (value == null) return 0.0;
+        if (value is num) return value.toDouble();
+        return double.tryParse(value.toString()) ?? 0.0;
+      }
+
+      // Populate Items and calculate weight
+      if (shipmentData['package_items'] != null) {
+        final rawItems = List<Map<String, dynamic>>.from(
+          shipmentData['package_items'],
+        );
+        final items = <Map<String, dynamic>>[];
+        double totalWeight = 0.0;
+        String description = '';
+
+        for (var item in rawItems) {
+          items.add({
+            'name': item['name'],
+            'quantity': int.tryParse(item['quantity'].toString()) ?? 1,
+            'price': parseDouble(item['unit_amount']),
+          });
+
+          // Calculate weight: unit_weight * quantity
+          double w = parseDouble(item['unit_weight']);
+          int q = int.tryParse(item['quantity'].toString()) ?? 1;
+          totalWeight += w * q;
+
+          // Capture description from first item if not set
+          if (description.isEmpty && item['description'] != null) {
+            description = item['description'];
+          }
+        }
+
+        requestBody['items'] = items;
+        requestBody['weight'] = totalWeight;
+        requestBody['description'] = description.isNotEmpty
+            ? description
+            : (shipmentData['delivery_instructions'] ?? 'Shipment');
+      } else {
+        requestBody['items'] = [];
+        requestBody['weight'] = 0.0;
+        requestBody['description'] = 'Shipment';
+      }
+
+      // Hardcoded fields as requested
+      // requestBody['dimension'] = 'small';
+      // requestBody['category'] = 'electronics';
 
       if (checkoutData.value != null) {
         final shipFrom = checkoutData.value!['ship_from'];
         if (shipFrom != null) {
-          requestBody['sender_name'] = shipFrom['name'];
-          requestBody['sender_email'] = shipFrom['email'];
-          requestBody['sender_phone'] = shipFrom['phone'];
-          requestBody['sender_street'] = shipFrom['street1'];
-          requestBody['sender_city'] = shipFrom['city'];
-          if (shipFrom['state'] != null &&
-              shipFrom['state'].toString().isNotEmpty) {
-            requestBody['sender_state'] = shipFrom['state'];
+          requestBody['sender_name'] = shipFrom['name'] ?? '';
+          requestBody['sender_email'] = shipFrom['email'] ?? '';
+          requestBody['sender_phone'] = shipFrom['phone'] ?? '';
+
+          final address = shipFrom['address'] ?? shipFrom['street1'] ?? '';
+          requestBody['sender_address'] = address; // Changed to sender_address
+
+          var city = shipFrom['city'];
+          if (city == null || city.toString().isEmpty) {
+            city = _extractCityFromAddress(address);
+          }
+          requestBody['sender_city'] = city ?? '';
+
+          var state = shipFrom['state'];
+          if (state == null || state.toString().isEmpty) {
+            state = _extractStateFromAddress(address);
+          }
+          if (state != null && state.toString().isNotEmpty) {
+            requestBody['sender_state'] = state;
+            requestBody['sender_country'] = 'Nigeria';
           }
         }
       }
@@ -201,20 +260,11 @@ class ShipmentController extends GetxController {
       requestBody['receiver_name'] = shipmentData['receiver_name'];
       requestBody['receiver_phone'] = shipmentData['receiver_phone'];
       requestBody['receiver_email'] = shipmentData['receiver_email'];
-      requestBody['receiver_street'] = shipmentData['receiver_address'];
+      requestBody['receiver_address'] =
+          shipmentData['receiver_address']; // Changed to receiver_address
       requestBody['receiver_city'] = shipmentData['receiver_city'];
       requestBody['receiver_state'] = shipmentData['receiver_state'];
       requestBody['receiver_country'] = shipmentData['receiver_country'];
-
-      // Add dimension object if available
-      if (shipmentData['package_dimension'] != null) {
-        requestBody['package_dimension'] = shipmentData['package_dimension'];
-      }
-
-      // Add category (ID) if available
-      if (shipmentData['category_id'] != null) {
-        requestBody['category'] = shipmentData['category_id'];
-      }
 
       // Add COD if available
       if (shipmentData['cod_amount'] != null) {
@@ -254,7 +304,7 @@ class ShipmentController extends GetxController {
           debugPrint('[ShipmentController] Waybill URL: $waybillUrl');
         }
 
-        return true;
+        return jsonResponse;
       } else {
         Get.snackbar(
           'Error',
@@ -263,7 +313,7 @@ class ShipmentController extends GetxController {
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
         );
-        return false;
+        return null;
       }
     } catch (e) {
       debugPrint('[ShipmentController] Error creating shipment: $e');
@@ -274,7 +324,7 @@ class ShipmentController extends GetxController {
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,
       );
-      return false;
+      return null;
     } finally {
       isCreatingShipment.value = false;
     }
@@ -339,5 +389,167 @@ class ShipmentController extends GetxController {
       }
     }
     return null;
+  }
+
+  // User Shipments
+  var userShipments = <UserShipment>[].obs;
+  var isLoadingShipments = false.obs;
+
+  Future<void> fetchUserShipments() async {
+    isLoadingShipments.value = true;
+    try {
+      final token = await StorageHelper.getToken();
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}shipments'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint(
+        '[ShipmentController] Fetch shipments response status: ${response.statusCode}',
+      );
+      // debugPrint('[ShipmentController] Fetch shipments response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['shipments'] != null) {
+          final List<dynamic> shipmentsJson = data['shipments'];
+          userShipments.value = shipmentsJson
+              .map((json) => UserShipment.fromJson(json))
+              .toList();
+        } else {
+          userShipments.clear();
+        }
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to fetch shipments',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      debugPrint('[ShipmentController] Error fetching shipments: $e');
+      Get.snackbar(
+        'Error',
+        'An error occurred while fetching shipments',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoadingShipments.value = false;
+    }
+  }
+
+  // Selected Shipment Details
+  var selectedShipment = Rxn<UserShipment>();
+  var isLoadingShipmentDetails = false.obs;
+
+  Future<bool> fetchShipmentDetails(String shipmentId) async {
+    isLoadingShipmentDetails.value = true;
+    try {
+      final token = await StorageHelper.getToken();
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}shipments/$shipmentId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint(
+        '[ShipmentController] Fetch details response status: ${response.statusCode}',
+      );
+      // debugPrint('[ShipmentController] Fetch details response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['shipment'] != null) {
+          selectedShipment.value = UserShipment.fromJson(data['shipment']);
+          return true;
+        }
+      }
+
+      Get.snackbar(
+        'Error',
+        'Failed to fetch shipment details',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    } catch (e) {
+      debugPrint('[ShipmentController] Error fetching details: $e');
+      Get.snackbar(
+        'Error',
+        'An error occurred: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    } finally {
+      isLoadingShipmentDetails.value = false;
+    }
+  }
+
+  var isCancellingShipment = false.obs;
+
+  Future<bool> cancelShipment(String trackingId, String shipmentId) async {
+    isCancellingShipment.value = true;
+    try {
+      final token = await StorageHelper.getToken();
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}shipments/$trackingId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint(
+        '[ShipmentController] Cancel shipment response status: ${response.statusCode}',
+      );
+      debugPrint(
+        '[ShipmentController] Cancel shipment response body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          // Simpler: Just refresh the details
+          await fetchShipmentDetails(shipmentId);
+          await fetchUserShipments(); // Refresh list as well
+          return true;
+        }
+      }
+
+      final data = jsonDecode(response.body);
+      Get.snackbar(
+        'Error',
+        data['message'] ?? 'Failed to cancel shipment',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    } catch (e) {
+      debugPrint('[ShipmentController] Error cancelling shipment: $e');
+      Get.snackbar(
+        'Error',
+        'An error occurred: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    } finally {
+      isCancellingShipment.value = false;
+    }
   }
 }

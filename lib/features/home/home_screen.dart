@@ -7,7 +7,12 @@ import 'package:starhills/features/auth/login_screen.dart';
 import 'package:starhills/features/home/package_details_screen.dart';
 import 'package:starhills/features/home/controllers/shipment_statistics_controller.dart';
 import 'package:starhills/features/home/controllers/wallet_controller.dart';
-import 'available_riders_screen.dart';
+import 'package:starhills/features/home/shipment_history_screen.dart';
+import 'package:starhills/features/home/shipment_controller.dart';
+import 'package:starhills/features/home/shipment_details_screen.dart';
+import 'package:starhills/features/home/wallet_screen.dart';
+import 'package:starhills/model/courier_model.dart';
+import 'drop_off_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,8 +20,16 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.put(AuthController());
-    final ShipmentStatisticsController statisticsController = Get.put(ShipmentStatisticsController());
+    final ShipmentStatisticsController statisticsController = Get.put(
+      ShipmentStatisticsController(),
+    );
     final WalletController walletController = Get.put(WalletController());
+    final ShipmentController shipmentController = Get.put(ShipmentController());
+
+    // Fetch shipments if empty (optional, but good for caching)
+    if (shipmentController.userShipments.isEmpty) {
+      shipmentController.fetchUserShipments();
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light grey background
@@ -135,6 +148,11 @@ class HomeScreen extends StatelessWidget {
                     imagePath:
                         'assets/images/box.png', // Using existing assets as placeholders if needed, or icons
                     isImage: true,
+                    onTap: () {
+                      Get.to(
+                        () => DropOffScreen(selectedRider: CourierModel()),
+                      );
+                    },
                   ),
                   _buildActionCard(
                     title: 'Track Delivery',
@@ -142,6 +160,9 @@ class HomeScreen extends StatelessWidget {
                     color: const Color(0xFFE8EAF6),
                     imagePath: 'assets/images/map.png',
                     isImage: true,
+                    onTap: () {
+                      Get.to(() => const ShipmentHistoryScreen());
+                    },
                   ),
                   _buildActionCard(
                     title: 'Wallet',
@@ -150,6 +171,9 @@ class HomeScreen extends StatelessWidget {
                     imagePath: 'assets/images/wallet.png', // Placeholder
                     isImage:
                         true, // Assuming third.png is wallet related or similar based on onboarding
+                    onTap: () {
+                      Get.to(() => const WalletScreen());
+                    },
                   ),
                   _buildActionCard(
                     title: 'Book a Rider',
@@ -158,11 +182,8 @@ class HomeScreen extends StatelessWidget {
                     imagePath: 'assets/images/route.png', // Placeholder
                     isImage: true,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AvailableRidersScreen(),
-                        ),
+                      Get.to(
+                        () => DropOffScreen(selectedRider: CourierModel()),
                       );
                     },
                   ),
@@ -295,10 +316,26 @@ class HomeScreen extends StatelessWidget {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStatCard(stats.total.toString(), 'Total', Colors.blue),
-                    _buildStatCard(stats.delivered.toString(), 'Delivered', Colors.green),
-                    _buildStatCard(stats.inTransit.toString(), 'Transit', Colors.orange),
-                    _buildStatCard(stats.cancelled.toString(), 'Cancelled', Colors.red),
+                    _buildStatCard(
+                      stats.total.toString(),
+                      'Total',
+                      Colors.blue,
+                    ),
+                    _buildStatCard(
+                      stats.delivered.toString(),
+                      'Delivered',
+                      Colors.green,
+                    ),
+                    _buildStatCard(
+                      stats.inTransit.toString(),
+                      'Transit',
+                      Colors.orange,
+                    ),
+                    _buildStatCard(
+                      stats.cancelled.toString(),
+                      'Cancelled',
+                      Colors.red,
+                    ),
                   ],
                 );
               }),
@@ -365,28 +402,80 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10.h),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+              Obx(() {
+                if (shipmentController.isLoadingShipments.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF3F4492)),
+                  );
+                }
+
+                if (shipmentController.userShipments.isEmpty) {
+                  return Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15.r),
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildShipmentRow('SB123456', 'Lagos', 'Abuja', 'In Transit', Colors.orange),
-                    const Divider(height: 1),
-                    _buildShipmentRow('SB123455', 'Kano', 'Lagos', 'Delivered', Colors.green),
-                    const Divider(height: 1),
-                    _buildShipmentRow('SB123454', 'Lagos', 'PH', 'Picked Up', Colors.blue),
-                  ],
-                ),
-              ),
+                    child: Center(
+                      child: Text(
+                        'No recent shipments found',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ),
+                  );
+                }
+
+                final recentShipments = shipmentController.userShipments
+                    .take(3)
+                    .toList();
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < recentShipments.length; i++) ...[
+                        GestureDetector(
+                          onTap: () async {
+                            // We could navigate passing the object directly, but maybe fetch full details first?
+                            // ShipmentHistoryScreen fetches details. Let's do the same.
+                            await shipmentController.fetchShipmentDetails(
+                              recentShipments[i].id,
+                            );
+                            Get.to(
+                              () => ShipmentDetailsScreen(
+                                shipment: recentShipments[i],
+                              ),
+                            );
+                          },
+                          child: _buildShipmentRow(
+                            recentShipments[i].trackingNumber,
+                            recentShipments[i].senderCity ??
+                                recentShipments[i]
+                                    .senderAddress, // Use city or fallback
+                            recentShipments[i].receiverCity ??
+                                recentShipments[i].receiverAddress,
+                            recentShipments[i].status,
+                            _getStatusColor(recentShipments[i].status),
+                          ),
+                        ),
+                        if (i < recentShipments.length - 1)
+                          const Divider(height: 1),
+                      ],
+                    ],
+                  ),
+                );
+              }),
               SizedBox(height: 30.h),
 
               // Actions
@@ -395,6 +484,8 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
+                        // Ensure shipmentController is reset or ready for new shipment
+                        // Actually PackageDetailsScreen handles flow.
                         Get.to(() => const PackageDetailsScreen());
                       },
                       style: ElevatedButton.styleFrom(
@@ -413,7 +504,9 @@ class HomeScreen extends StatelessWidget {
                   SizedBox(width: 15.w),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Get.to(() => const ShipmentHistoryScreen());
+                      },
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 15.h),
                         side: const BorderSide(color: Color(0xFF3F4492)),
@@ -468,17 +561,20 @@ class HomeScreen extends StatelessWidget {
           SizedBox(height: 5.h),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildShipmentRow(String id, String from, String to, String status, Color statusColor) {
+  Widget _buildShipmentRow(
+    String id,
+    String from,
+    String to,
+    String status,
+    Color statusColor,
+  ) {
     return Padding(
       padding: EdgeInsets.all(15.r),
       child: Row(
@@ -497,12 +593,28 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(height: 5.h),
                 Row(
                   children: [
-                    Text(from, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+                    Text(
+                      from,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 5.w),
-                      child: Icon(Icons.arrow_forward, size: 12.sp, color: Colors.grey),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        size: 12.sp,
+                        color: Colors.grey,
+                      ),
                     ),
-                    Text(to, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+                    Text(
+                      to,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -528,6 +640,24 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'success':
+      case 'delivered':
+      case 'completed':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      case 'transit':
+      case 'in_transit':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildActionCard({

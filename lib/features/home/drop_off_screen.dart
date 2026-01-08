@@ -33,19 +33,24 @@ class DropOffScreen extends StatelessWidget {
                 children: [
                   // Header
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Center(
-                        child: Text(
-                          "Set Pickup & Drop-off",
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
+                      if (Navigator.canPop(context))
+                        GestureDetector(
+                          onTap: () => Get.back(),
+                          child: Icon(Icons.arrow_back, size: 24.sp),
+                        )
+                      else
+                        SizedBox(width: 24.sp),
+                      Text(
+                        "Set Pickup & Drop-off",
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
-                      const Icon(Icons.help_outline),
+                      Icon(Icons.help_outline, size: 24.sp),
                     ],
                   ),
                   SizedBox(height: 20.h),

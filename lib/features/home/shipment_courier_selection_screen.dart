@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'shipment_controller.dart';
+import 'shipment_success_screen.dart';
 
 class ShipmentCourierSelectionScreen extends StatefulWidget {
   final Map<String, dynamic> rateRequestBody;
@@ -194,16 +195,23 @@ class _ShipmentCourierSelectionScreenState
                                       widget.insuranceCode;
                                 }
 
-                                final success = await controller.createShipment(
+                                final result = await controller.createShipment(
                                   requestBody,
                                 );
-                                if (success) {
+                                if (result != null) {
                                   Get.snackbar(
                                     'Success',
                                     'Shipment created successfully!',
                                     backgroundColor: Colors.green,
                                     colorText: Colors.white,
                                     snackPosition: SnackPosition.BOTTOM,
+                                  );
+
+                                  // Navigate to success screen
+                                  Get.off(
+                                    () => ShipmentSuccessScreen(
+                                      shipmentData: result,
+                                    ),
                                   );
                                 }
                               }

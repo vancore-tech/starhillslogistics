@@ -8,6 +8,8 @@ import 'home_screen.dart';
 import 'drop_off_screen.dart';
 import 'package:starhills/features/home/profile_screen.dart';
 
+import 'package:starhills/features/home/shipment_history_screen.dart';
+
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
@@ -25,7 +27,7 @@ class _MainLayoutState extends State<MainLayout> {
     DropOffScreen(
       selectedRider: CourierModel(),
     ), // Pass empty model, will be selected later
-    const Center(child: Text('Track Screen')), // Placeholder
+    const ShipmentHistoryScreen(),
     const ProfileScreen(),
   ];
 

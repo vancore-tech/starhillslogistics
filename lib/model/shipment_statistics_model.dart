@@ -17,12 +17,26 @@ class ShipmentStatisticsModel {
 
   factory ShipmentStatisticsModel.fromJson(Map<String, dynamic> json) {
     return ShipmentStatisticsModel(
-      total: json['total'] ?? 0,
-      delivered: json['delivered'] ?? 0,
-      inTransit: json['inTransit'] ?? 0,
-      cancelled: json['cancelled'] ?? 0,
-      revenue: json['revenue'] ?? 0,
-      deliveryRate: json['deliveryRate'] ?? 0,
+      total: _parseInt(json['total']),
+      delivered: _parseInt(json['delivered']),
+      inTransit: _parseInt(
+        json['in_transit'] ?? json['transit'] ?? json['inTransit'],
+      ),
+      cancelled: _parseInt(json['cancelled']),
+      revenue: _parseNum(json['revenue']),
+      deliveryRate: _parseNum(json['delivery_rate'] ?? json['deliveryRate']),
     );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static num _parseNum(dynamic value) {
+    if (value is num) return value;
+    if (value is String) return num.tryParse(value) ?? 0;
+    return 0;
   }
 }
